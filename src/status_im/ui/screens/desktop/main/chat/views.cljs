@@ -22,10 +22,33 @@
             [status-im.ui.components.icons.vector-icons :as vector-icons]
             [status-im.ui.screens.desktop.main.chat.styles :as styles]
             [status-im.contact.db :as contact.db]
+            [status-im.utils.contacts :as utils.contacts]
+            [status-im.ui.components.popup-menu.views :as popup-menu]
             [status-im.i18n :as i18n]
             [status-im.ui.screens.desktop.main.chat.events :as chat.events]
             [status-im.ui.screens.chat.message.message :as chat.message]))
 
+(defn toolbar-popup-menu [public-key group-chat public? chat-id]
+  (popup-menu/wrap-with-menu
+   [vector-icons/icon :icons/dots-horizontal
+    {:style {:tint-color colors/black
+             :width      24
+             :height     24}}]
+   (remove nil?
+           [(when (and (not group-chat) (not public?))
+              {:text (i18n/label :t/view-profile)
+               :on-select #(re-frame/dispatch [:show-profile-desktop public-key])})
+            (when (and group-chat (not public?))
+              {:text (i18n/label :t/group-info)
+               :on-select #(re-frame/dispatch [:show-group-chat-profile])})
+            {:text (i18n/label :t/clear-history)
+             :on-select #(re-frame/dispatch [:chat.ui/clear-history-pressed])}
+            {:text (i18n/label :t/delete-chat)
+             :on-select #(re-frame/dispatch [(if (and group-chat (not public?))
+                                               :group-chats.ui/remove-chat-pressed
+                                               :chat.ui/remove-chat-pressed)
+                                             chat-id])}])
+   :menu nil))
 (views/defview toolbar-chat-view [{:keys [chat-id color public-key public? group-chat]
                                    :as current-chat}]
   (views/letsubs [chat-name         [:chats/current-chat-name]
@@ -50,29 +73,7 @@
              public?
              [react/text {:style styles/public-chat-text}
               (i18n/label :t/public-chat)])]]
-     [react/view
-      (when (and (not group-chat) (not public?))
-        [react/text {:style (styles/profile-actions-text colors/black)
-                     :on-press (fn [] (.show rn-dependencies/desktop-menu
-                                             (clj->js (vector {:text (i18n/label :t/view-profile)
-                                                               :onPress #(re-frame/dispatch [:show-profile-desktop public-key])}
-                                                              {:text (i18n/label :t/clear-history)
-                                                               :onPress #(re-frame/dispatch [:chat.ui/clear-history-pressed])}))))
-                     #_(re-frame/dispatch [:show-profile-desktop public-key])}
-         (i18n/label :t/view-profile)])
-      (when (and group-chat (not public?))
-        [react/text {:style (styles/profile-actions-text colors/black)
-                     :on-press #(re-frame/dispatch [:show-group-chat-profile])}
-         (i18n/label :t/group-info)])
-      [react/text {:style (styles/profile-actions-text colors/black)
-                   :on-press #(re-frame/dispatch [:chat.ui/clear-history-pressed])}
-       (i18n/label :t/clear-history)]
-      [react/text {:style (styles/profile-actions-text colors/black)
-                   :on-press #(re-frame/dispatch [(if (and group-chat (not public?))
-                                                    :group-chats.ui/remove-chat-pressed
-                                                    :chat.ui/remove-chat-pressed)
-                                                  chat-id])}
-       (i18n/label :t/delete-chat)]]]))
+     [toolbar-popup-menu public-key group-chat public? chat-id]]))
 
 (views/defview message-author-name [{:keys [from]}]
   (views/letsubs [incoming-name   [:contacts/contact-name-by-identity from]]

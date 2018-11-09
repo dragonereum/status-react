@@ -5,6 +5,7 @@
             [status-im.i18n :as i18n]
             [status-im.ui.components.colors :as colors]
             [status-im.ui.screens.desktop.main.tabs.home.styles :as styles]
+            [status-im.ui.components.popup-menu.views :as popup-menu]
             [clojure.string :as string]
             [status-im.ui.screens.home.views.inner-item :as chat-item]
             [taoensso.timbre :as log]
@@ -57,9 +58,26 @@
        [react/view {:style styles/timestamp}
         [chat-item/message-timestamp (:timestamp last-message)]]])))
 
-(defn chat-list-item [[chat-id chat]]
-  [react/touchable-highlight {:on-press #(re-frame/dispatch [:chat.ui/navigate-to-chat chat-id])}
-   [chat-list-item-inner-view (assoc chat :chat-id chat-id)]])
+(defn chat-list-item [[chat-id
+                       {:keys [group-chat public? public-key] :as chat}]]
+  [popup-menu/wrap-with-menu
+   [chat-list-item-inner-view (assoc chat :chat-id chat-id)]
+   (remove nil?
+           [(when (and (not group-chat) (not public?))
+              {:text (i18n/label :t/view-profile)
+               :on-select #(re-frame/dispatch [:show-profile-desktop public-key])})
+            (when (and group-chat (not public?))
+              {:text (i18n/label :t/group-info)
+               :on-select #(re-frame/dispatch [:show-group-chat-profile])})
+            {:text (i18n/label :t/clear-history)
+             :on-select #(re-frame/dispatch [:chat.ui/clear-history-pressed])}
+            {:text (i18n/label :t/delete-chat)
+             :on-select #(re-frame/dispatch [(if (and group-chat (not public?))
+                                               :group-chats.ui/remove-chat-pressed
+                                               :chat.ui/remove-chat-pressed)
+                                             chat-id])}])
+   #(re-frame/dispatch [:chat.ui/navigate-to-chat chat-id])
+   :menu])
 
 (defn tag-view [tag {:keys [on-press]}]
   [react/touchable-highlight {:style {:border-radius 5

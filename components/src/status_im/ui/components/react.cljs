@@ -70,6 +70,12 @@
 (def activity-indicator (get-class "ActivityIndicator"))
 
 (def modal (get-class "Modal"))
+(def popup-menu-provider (adapt-class (.-MenuProvider js-dependencies/popup-menu)))
+(def popup-menu (adapt-class (.-Menu js-dependencies/popup-menu)))
+(def popup-menu-options (adapt-class (.-MenuOptions js-dependencies/popup-menu)))
+(def popup-menu-option (adapt-class (.-MenuOption js-dependencies/popup-menu)))
+(def popup-menu-trigger (adapt-class (.-MenuTrigger js-dependencies/popup-menu)))
+(def popup-menu-renderers (js->clj (.-renderers js-dependencies/popup-menu) :keywordize-keys true))
 
 (def pan-responder (.-PanResponder js-dependencies/react-native))
 (def animated (.-Animated js-dependencies/react-native))

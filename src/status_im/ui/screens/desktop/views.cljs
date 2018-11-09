@@ -35,5 +35,6 @@
                        :backup-recovery-phrase) main.views/main-views
                       :login login.views/login
                       react/view)]
-      [react/view {:style {:flex 1}}
-       [component]])))
+      [react/popup-menu-provider
+       [react/view {:style {:flex 1}}
+        [component]]])))

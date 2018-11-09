@@ -5,6 +5,7 @@
 (def http-bridge            (js/require "react-native-http-bridge"))
 (def keychain               (js/require "react-native-keychain"))
 (def qr-code                (js/require "react-native-qrcode"))
+(def popup-menu             (js/require "react-native-popup-menu"))
 (def react-native           (js/require "react-native"))
 (def realm                  (js/require "realm"))
 (def webview-bridge         (js/require "react-native-webview-bridge"))
