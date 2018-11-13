@@ -6,9 +6,9 @@
 (defn wrap-with-menu [component items left-click-action right-click-action]
   (let [menu-ref (atom nil)
         left-click-action (if (= left-click-action :menu) #(.open @menu-ref)
-                              (or left-click-action :none))
+                              left-click-action)
         right-click-action (if (= right-click-action :menu) #(.open @menu-ref)
-                               (or right-click-action :none))]
+                               right-click-action)]
     [react/popup-menu {:renderer (:NotAnimatedContextMenu react/popup-menu-renderers)
                        :ref #(reset! menu-ref %)}
      [react/popup-menu-trigger {:disabled true}]
@@ -18,6 +18,7 @@
      [react/touchable-highlight
       {:on-press #(let [right-click? (= "right" (.-button (.-nativeEvent %)))]
                     (log/debug "### wrap-with-menu" right-click?)
-                    (if right-click? (right-click-action) (left-click-action)))}
+                    (if right-click? (when right-click-action (right-click-action))
+                        (when left-click-action (left-click-action))))}
       component]]))
 
