@@ -4,6 +4,7 @@
 (def fs                     (js/require "react-native-fs"))
 (def http-bridge            (js/require "react-native-http-bridge"))
 (def keychain               (js/require "react-native-keychain"))
+(def popup-menu             (js/require "react-native-popup-menu"))
 (def qr-code                (js/require "react-native-qrcode"))
 (def react-native           (js/require "react-native"))
 (def realm                  (js/require "realm"))
