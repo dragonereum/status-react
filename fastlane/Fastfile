@@ -27,9 +27,9 @@ end
 # uploads `file` to sauce labs (overwrites if there is anoter file from the
 # same commit)
 def upload_to_saucelabs(file)
-    username = ENV["SAUCE_USERNAME"]
     key = ENV["SAUCE_ACCESS_KEY"]
-    unique_name = ENV["SAUCE_LABS_APK"]
+    username = ENV["SAUCE_USERNAME"]
+    unique_name = ENV["SAUCE_LABS_NAME"]
 
     url = "https://saucelabs.com/rest/v1/storage/" + username + '/' + unique_name + "?overwrite=true"
 
@@ -71,6 +71,37 @@ def build_ios_adhoc
     )
 end
 
+# builds an ios app with e2e configuration and put it
+# to "status-e2e" output folder
+def build_ios_e2e
+    match(
+        type: "adhoc",
+        force_for_new_devices: true,
+        readonly: true,
+        keychain_name: "login.keychain"
+    )
+
+    xcarchive_path = build_app(
+        sdk: "iphoneos",
+        scheme: "StatusIm",
+        workspace: "ios/StatusIm.xcworkspace",
+        configuration: "Release",
+        export_method: "development",
+        build_path: 'status-e2e',
+        output_directory: 'status-e2e',
+        output_name: 'StatusIm.app',
+        silent: true,
+        clean: true,
+        skip_archive: false,
+        skip_package_ipa: true,
+    )
+
+    zip(
+        path: xcarchive_path + '/Products/Applications/StatusIm.app',
+        output_path: 'status-e2e/StatusIm.app.zip',
+        verbose: true,
+    )
+end
 
 def upload_to_diawi(source)
     diawi(
@@ -84,12 +115,20 @@ end
 
 platform :ios do
   desc "`fastlane ios adhoc` - ad-hoc lane for iOS."
-  desc "This lane is used PRs, Releases, etc."
+  desc "This lane is used for PRs, Releases, etc."
   desc "It creates an .ipa that can be used by a list of devices, registeded in the App Store Connect."
   desc "This .ipa is ready to be distibuted through diawi.com"
   lane :adhoc do
     unlock_keychain_if_needed
     build_ios_adhoc
+  end
+
+  desc "`fastlane ios e2e` - e2e lane for iOS."
+  desc "This lane is used for SauceLabs end-to-end testing."
+  desc "It creates an .app that can be used inside of a iPhone simulator."
+  lane :e2e do
+    unlock_keychain_if_needed
+    build_ios_e2e
   end
 
   desc "`fastlane ios pr` - makes a new pr build"
@@ -149,6 +188,19 @@ platform :ios do
     upload_to_diawi("status-adhoc/StatusIm.ipa")
   end
 
+  desc "`fastlane ios saucelabs` - upload .app to sauce labs"
+  desc "also notifies in a GitHub comments"
+  desc "expects to have an .apk prepared: `android/app/build/outputs/apk/release/app-release.apk`"
+  desc "expects to have a saucelabs access key as SAUCE_ACCESS_KEY env variable"
+  desc "expects to have a saucelabs username token as SAUCE_USERNAME env variable"
+  desc "expects to have a saucelabs destination name as SAUCE_LABS_NAME env variable"
+  desc "will fails if file isn't there"
+  lane :saucelabs do
+    upload_to_saucelabs(
+        "status-e2e/StatusIm.app.zip"
+    )
+  end
+
   desc "This fastlane step cleans up XCode DerivedData folder"
   lane :cleanup do
     clear_derived_data
@@ -204,7 +256,7 @@ platform :android do
   desc "expects to have an .apk prepared: `android/app/build/outputs/apk/release/app-release.apk`"
   desc "expects to have a saucelabs access key as SAUCE_ACCESS_KEY env variable"
   desc "expects to have a saucelabs username token as SAUCE_USERNAME env variable"
-  desc "expects to have a saucelabs destination name as SAUCE_LABS_APK env variable"
+  desc "expects to have a saucelabs destination name as SAUCE_LABS_NAME env variable"
   desc "will fails if file isn't there"
   lane :saucelabs do
     upload_to_saucelabs(
