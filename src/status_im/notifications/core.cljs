@@ -3,8 +3,8 @@
             [re-frame.core :as re-frame]
             [status-im.react-native.js-dependencies :as rn]
             [taoensso.timbre :as log]
+            [status-im.i18n :as i18n]
             [status-im.accounts.db :as accounts.db]
-            [status-im.accounts.login.core :as accounts.login]
             [status-im.chat.models :as chat-model]
             [status-im.utils.platform :as platform]
             [status-im.utils.fx :as fx]))
@@ -29,31 +29,17 @@
            (log/debug "notifications-denied")
            (re-frame/dispatch [:notifications.callback/request-notifications-permissions-denied {}]))))))
 
+(defn create-notification-payload
+  [{:keys [from to] :as payload}]
+  (if (and from to)
+    {:msg (js/JSON.stringify #js {:from from
+                                  :to   to})}
+    (throw (str "Invalid push notification payload" payload))))
+
+(when platform/desktop?
+  (defn handle-initial-push-notification [] ())) ;; no-op
+
 (when-not platform/desktop?
-
-  (defn get-fcm-token []
-    (-> (.getToken (.messaging firebase))
-        (.then (fn [x]
-                 (log/debug "get-fcm-token: " x)
-                 (re-frame/dispatch [:notifications.callback/get-fcm-token-success x])))))
-
-  (defn on-refresh-fcm-token []
-    (.onTokenRefresh (.messaging firebase)
-                     (fn [x]
-                       (log/debug "on-refresh-fcm-token: " x)
-                       (re-frame/dispatch [:notifications.callback/get-fcm-token-success x]))))
-
-  ;; TODO(oskarth): Only called in background on iOS right now.
-  ;; NOTE(oskarth): Hardcoded data keys :sum and :msg in status-go right now.
-  (defn on-notification []
-    (.onNotification (.notifications firebase)
-                     (fn [event-js]
-                       (let [event (js->clj event-js :keywordize-keys true)
-                             data (select-keys event [:sum :msg])
-                             aps (:aps event)]
-                         (log/debug "on-notification event: " (pr-str event))
-                         (log/debug "on-notification aps: " (pr-str aps))
-                         (log/debug "on-notification data: " (pr-str data))))))
 
   (def channel-id "status-im")
   (def channel-name "Status")
@@ -61,10 +47,65 @@
   (def group-id "im.status.ethereum.MESSAGE")
   (def icon "ic_stat_status_notification")
 
+  (defn get-notification-payload [message-js]
+    (let [data (.. message-js -data) ;; https://github.com/invertase/react-native-firebase/blob/adcbeac3d11585dd63922ef178ff6fd886d5aa9b/src/modules/notifications/Notification.js#L79
+          msg  (js/JSON.parse (object/get data "msg"))
+          from (object/get msg "from")
+          to   (object/get msg "to")]
+      (if (and from to)
+        {:from from
+         :to   to}
+        (log/warn "failed to retrieve notification payload from" (js/JSON.stringify data)))))
+
+  (defn display-notification [{:keys [title body from to]}]
+    (let [notification (firebase.notifications.Notification.)]
+      (.. notification
+          (setTitle title)
+          (setBody body)
+          (setData (clj->js (create-notification-payload {:from from
+                                                          :to to})))
+          (setSound sound-name))
+      (when platform/android?
+        (.. notification
+            (-android.setChannelId channel-id)
+            (-android.setAutoCancel true)
+            (-android.setPriority firebase.notifications.Android.Priority.High)
+            (-android.setGroup group-id)
+            (-android.setGroupSummary true)
+            (-android.setSmallIcon icon)))
+      (.. firebase
+          notifications
+          (displayNotification notification)
+          (then #(log/debug "Display Notification" title body))
+          (catch (fn [error]
+                   (log/debug "Display Notification error" title body error))))))
+
+  (defn get-fcm-token []
+    (-> (.getToken (.messaging firebase))
+        (.then (fn [x]
+                 (log/debug "get-fcm-token:" x)
+                 (re-frame/dispatch [:notifications.callback/get-fcm-token-success x])))))
+
+  (defn on-refresh-fcm-token []
+    (.onTokenRefresh (.messaging firebase)
+                     (fn [x]
+                       (log/debug "on-refresh-fcm-token:" x)
+                       (re-frame/dispatch [:notifications.callback/get-fcm-token-success x]))))
+
+  (defn on-notification []
+    (.onMessage (.messaging firebase)
+                (fn [message-js]
+                  (log/debug "onMessage called")
+                  (let [payload (get-notification-payload message-js)]
+                    (when payload
+                      (display-notification (merge {:title (i18n/label :notifications-new-message-title)
+                                                    :body  (i18n/label :notifications-new-message-body)}
+                                                   payload)))))))
+
   (defn create-notification-channel []
     (let [channel (firebase.notifications.Android.Channel. channel-id
                                                            channel-name
-                                                           firebase.notifications.Android.Importance.Max)]
+                                                           firebase.notifications.Android.Importance.High)]
       (.setSound channel sound-name)
       (.setShowBadge channel true)
       (.enableVibration channel true)
@@ -84,23 +125,13 @@
                   (chat-model/navigate-to-chat from nil))
         {:db (assoc-in db [:push-notifications/stored to] from)})))
 
-  (defn parse-notification-payload [s]
-    (try
-      (js/JSON.parse s)
-      (catch :default _
-        #js {})))
-
-  (defn handle-notification-event [event]
-    (let [msg (object/get (.. event -notification -data) "msg")
-          data (parse-notification-payload msg)
-          from (object/get data "from")
-          to (object/get data "to")]
-      (log/debug "on notification" (pr-str msg))
-      (when (and from to)
-        (re-frame/dispatch [:notifications/notification-event-received {:from from
-                                                                        :to   to}]))))
+  (defn handle-notification-event [event] ;; https://github.com/invertase/react-native-firebase/blob/adcbeac3d11585dd63922ef178ff6fd886d5aa9b/src/modules/notifications/Notification.js#L13
+    (let [payload (get-notification-payload (.. event -notification))]
+      (when payload
+        (re-frame/dispatch [:notifications/notification-event-received payload]))))
 
   (defn handle-initial-push-notification
+    "This method handles pending push notifications. It is only needed to handle PNs from legacy clients (which use firebase.notifications API)"
     []
     (.. firebase
         notifications
@@ -119,27 +150,7 @@
     (on-notification)
     (on-notification-opened)
     (when platform/android?
-      (create-notification-channel)))
-
-  (defn display-notification [{:keys [title body from to]}]
-    (let [notification (firebase.notifications.Notification.)]
-      (.. notification
-          (setTitle title)
-          (setBody body)
-          (setData (js/JSON.stringify #js {:from from
-                                           :to   to}))
-          (setSound sound-name)
-          (-android.setChannelId channel-id)
-          (-android.setAutoCancel true)
-          (-android.setPriority firebase.notifications.Android.Priority.Max)
-          (-android.setGroup group-id)
-          (-android.setGroupSummary true)
-          (-android.setSmallIcon icon))
-      (.. firebase
-          notifications
-          (displayNotification notification)
-          (then #(log/debug "Display Notification" title body))
-          (then #(log/debug "Display Notification error" title body))))))
+      (create-notification-channel))))
 
 (fx/defn process-stored-event [cofx address]
   (when-not platform/desktop?
