@@ -27,14 +27,13 @@
                       :add-participants-toggle-list add-participants-toggle-list
 
                       (:new-contact
-                       :advanced-settings
-                       :chat
-                       :home
-                       :qr-code
-                       :chat-profile
-                       :backup-recovery-phrase) main.views/main-views
+                        :advanced-settings
+                        :chat
+                        :home
+                        :qr-code
+                        :chat-profile
+                        :backup-recovery-phrase) main.views/main-views
                       :login login.views/login
                       react/view)]
-      [react/popup-menu-provider
-       [react/view {:style {:flex 1}}
-        [component]]])))
+      [react/view {:style {:flex 1}}
+       [component]])))
