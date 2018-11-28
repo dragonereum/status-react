@@ -1,14 +1,11 @@
 #include "desktopmenu.h"
 #include "bridge.h"
-#include "eventdispatcher.h"
 
 #include <QCoreApplication>
 #include <QDebug>
-#include <QDesktopServices>
-#include <QUrl>
-#include <QFileOpenEvent>
+#include <QMenu>
 
-Q_LOGGING_CATEGORY(MENU, "RCTMenu")
+Q_LOGGING_CATEGORY(DESKTOPMENU, "DesktopMenu")
 
 namespace {
 struct RegisterQMLMetaType {
@@ -19,7 +16,7 @@ struct RegisterQMLMetaType {
 class DesktopMenuPrivate {
 public:
   Bridge *bridge = nullptr;
-  void createMenu(const QVariantMap& items, double callback);
+  void createMenu(const QStringList& items, double callback);
 private:
   void onTriggered(QAction* action);
 };
@@ -29,18 +26,13 @@ void DesktopMenuPrivate::createMenu(const QStringList& items, double callback) {
   for (const QString& name : items) {
     menu->addAction(name);
   }
-  connect(menu, &QMenu::triggered, &DesktopMenuPrivate::onTriggered);
-}
-
-void DesktopMenuPrivate::onTriggered(QAction* action) {
+  QObject::connect(menu, &QMenu::triggered, [=](QAction* action) {
     bridge->invokePromiseCallback(callback, QVariantList{action->text()});
+  });
 }
 
 DesktopMenu::DesktopMenu(QObject *parent)
     : QObject(parent), d_ptr(new DesktopMenuPrivate) {
-
-  QCoreApplication::instance()->installEventFilter(this);
-  connect(this, &DesktopMenu::itemClicked, this, &DesktopMenu::handleURL);
 }
 
 DesktopMenu::~DesktopMenu() {
@@ -48,10 +40,12 @@ DesktopMenu::~DesktopMenu() {
 
 void DesktopMenu::setBridge(Bridge *bridge) {
   Q_D(DesktopMenu);
+
+  qCDebug(DESKTOPMENU) << "### DesktopMenu::setBridge";
   d->bridge = bridge;
 }
 
-QString DesktopMenu::moduleName() { return "DesktopMenu"; }
+QString DesktopMenu::moduleName() { return "DesktopMenuManager"; }
 
 QList<ModuleMethod *> DesktopMenu::methodsToExport() {
   return QList<ModuleMethod *>{};
@@ -61,6 +55,7 @@ QVariantMap DesktopMenu::constantsToExport() { return QVariantMap(); }
 
 void DesktopMenu::show(const QStringList& items, double callback) {
   Q_D(DesktopMenu);
+  qCDebug(DESKTOPMENU) << "### DesktopMenu::show";
   d_ptr->createMenu(items, callback);
 
 }
