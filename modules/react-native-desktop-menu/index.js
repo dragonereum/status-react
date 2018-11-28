@@ -22,7 +22,7 @@ class DesktopMenu {
         itemNames,
         (name) => {
           console.warn("###js DesktopMenu callback invoked");
-          itemMap.get(name).onPress();
+          (itemMap.get(name))();
         }
     );
   }

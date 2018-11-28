@@ -5,6 +5,7 @@
             [clojure.string :as string]
             [status-im.ui.screens.chat.styles.message.message :as message.style]
             [status-im.ui.screens.chat.message.message :as message]
+            [status-im.react-native.js-dependencies :as rn-dependencies]
             [taoensso.timbre :as log]
             [reagent.core :as reagent]
             [status-im.ui.screens.chat.utils :as chat-utils]
@@ -52,7 +53,12 @@
      [react/view
       (when (and (not group-chat) (not public?))
         [react/text {:style (styles/profile-actions-text colors/black)
-                     :on-press #(re-frame/dispatch [:show-profile-desktop public-key])}
+                     :on-press (fn [] (.show rn-dependencies/desktop-menu
+                                             (clj->js (vector {:text (i18n/label :t/view-profile)
+                                                               :onPress #(re-frame/dispatch [:show-profile-desktop public-key])}
+                                                              {:text (i18n/label :t/clear-history)
+                                                               :onPress #(re-frame/dispatch [:chat.ui/clear-history-pressed])}))))
+                     #_(re-frame/dispatch [:show-profile-desktop public-key])}
          (i18n/label :t/view-profile)])
       (when (and group-chat (not public?))
         [react/text {:style (styles/profile-actions-text colors/black)

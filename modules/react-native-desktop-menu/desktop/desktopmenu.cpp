@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QMenu>
+#include <QCursor>
 
 Q_LOGGING_CATEGORY(DESKTOPMENU, "DesktopMenu")
 
@@ -29,6 +30,8 @@ void DesktopMenuPrivate::createMenu(const QStringList& items, double callback) {
   QObject::connect(menu, &QMenu::triggered, [=](QAction* action) {
     bridge->invokePromiseCallback(callback, QVariantList{action->text()});
   });
+  qCDebug(DESKTOPMENU) << "### DesktopMenuPrivate before open";
+  menu->popup(QCursor::pos());
 }
 
 DesktopMenu::DesktopMenu(QObject *parent)
