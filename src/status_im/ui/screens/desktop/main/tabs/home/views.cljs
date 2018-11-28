@@ -60,24 +60,14 @@
 
 (defn chat-list-item [[chat-id
                        {:keys [group-chat public? public-key] :as chat}]]
-  [popup-menu/wrap-with-menu
-   [chat-list-item-inner-view (assoc chat :chat-id chat-id)]
-   (remove nil?
-           [(when (and (not group-chat) (not public?))
-              {:text (i18n/label :t/view-profile)
-               :on-select #(re-frame/dispatch [:show-profile-desktop public-key])})
-            (when (and group-chat (not public?))
-              {:text (i18n/label :t/group-info)
-               :on-select #(re-frame/dispatch [:show-group-chat-profile])})
-            {:text (i18n/label :t/clear-history)
-             :on-select #(re-frame/dispatch [:chat.ui/clear-history-pressed])}
-            {:text (i18n/label :t/delete-chat)
-             :on-select #(re-frame/dispatch [(if (and group-chat (not public?))
-                                               :group-chats.ui/remove-chat-pressed
-                                               :chat.ui/remove-chat-pressed)
-                                             chat-id])}])
-   #(re-frame/dispatch [:chat.ui/navigate-to-chat chat-id])
-   :menu])
+  [react/touchable-highlight
+   {:on-press (fn [arg]
+                (let [right-click? (= "right" (.-button (.-nativeEvent arg)))]
+                  (re-frame/dispatch [:chat.ui/navigate-to-chat chat-id])
+                  (when right-click?
+                    (popup-menu/show-desktop-menu
+                     (popup-menu/get-chat-menu-items public-key group-chat public? chat-id)))))}
+   [chat-list-item-inner-view (assoc chat :chat-id chat-id)]])
 
 (defn tag-view [tag {:keys [on-press]}]
   [react/touchable-highlight {:style {:border-radius 5

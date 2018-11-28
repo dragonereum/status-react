@@ -26,27 +26,6 @@
             [status-im.ui.screens.desktop.main.chat.events :as chat.events]
             [status-im.ui.screens.chat.message.message :as chat.message]))
 
-(defn toolbar-popup-menu [public-key group-chat public? chat-id]
-  (popup-menu/wrap-with-menu
-   [vector-icons/icon :icons/dots-horizontal
-    {:style {:tint-color colors/black
-             :width      24
-             :height     24}}]
-   (remove nil?
-           [(when (and (not group-chat) (not public?))
-              {:text (i18n/label :t/view-profile)
-               :on-select #(re-frame/dispatch [:show-profile-desktop public-key])})
-            (when (and group-chat (not public?))
-              {:text (i18n/label :t/group-info)
-               :on-select #(re-frame/dispatch [:show-group-chat-profile])})
-            {:text (i18n/label :t/clear-history)
-             :on-select #(re-frame/dispatch [:chat.ui/clear-history-pressed])}
-            {:text (i18n/label :t/delete-chat)
-             :on-select #(re-frame/dispatch [(if (and group-chat (not public?))
-                                               :group-chats.ui/remove-chat-pressed
-                                               :chat.ui/remove-chat-pressed)
-                                             chat-id])}])
-   :menu nil))
 (views/defview toolbar-chat-view [{:keys [chat-id color public-key public? group-chat]
                                    :as current-chat}]
   (views/letsubs [chat-name         [:chats/current-chat-name]
@@ -71,7 +50,13 @@
              public?
              [react/text {:style styles/public-chat-text}
               (i18n/label :t/public-chat)])]]
-     [toolbar-popup-menu public-key group-chat public? chat-id]]))
+     [react/touchable-highlight
+      {:on-press #(popup-menu/show-desktop-menu
+                   (popup-menu/get-chat-menu-items public-key group-chat public? chat-id))}
+      [vector-icons/icon :icons/dots-horizontal
+       {:style {:tint-color colors/black
+                :width      24
+                :height     24}}]]]))
 
 (views/defview message-author-name [{:keys [from]}]
   (views/letsubs [incoming-name   [:contacts/contact-name-by-identity from]]
