@@ -7606,6 +7606,11 @@ react-native-os@1.1.0:
   resolved "https://registry.yarnpkg.com/react-native-os/-/react-native-os-1.1.0.tgz#bfbe1c44d8a5b14a6f3a3a405d8ada6f547a516e"
   integrity sha1-v74cRNilsUpvOjpAXYrab1R6UW4=
 
+react-native-popup-menu@0.14.0:
+  version "0.14.0"
+  resolved "https://registry.yarnpkg.com/react-native-popup-menu/-/react-native-popup-menu-0.14.0.tgz#8a11e4a78f76f5883fa5eb9d736f0ec2df8765ce"
+  integrity sha1-ihHkp4929Yg/peudc28Owt+HZc4=
+
 react-native-qrcode@0.2.6:
   version "0.2.6"
   resolved "https://registry.yarnpkg.com/react-native-qrcode/-/react-native-qrcode-0.2.6.tgz#dd92f151c118860092af9fa5bc0995f2f9dddb16"
