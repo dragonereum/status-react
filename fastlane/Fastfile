@@ -82,14 +82,15 @@ def build_ios_e2e
     )
 
     xcarchive_path = build_app(
-        sdk: "iphoneos",
+        sdk: "iphonesimulator11.3",
+        destination: "generic/platform=iOS Simulator",
         scheme: "StatusIm",
         workspace: "ios/StatusIm.xcworkspace",
         configuration: "Release",
         export_method: "development",
-        build_path: 'status-e2e',
-        output_directory: 'status-e2e',
-        output_name: 'StatusIm.app',
+        build_path: "status-e2e",
+        output_directory: "status-e2e",
+        output_name: "StatusIm.app",
         silent: true,
         clean: true,
         skip_archive: false,
@@ -97,8 +98,8 @@ def build_ios_e2e
     )
 
     zip(
-        path: xcarchive_path + '/Products/Applications/StatusIm.app',
-        output_path: 'status-e2e/StatusIm.app.zip',
+        path: xcarchive_path + "/Products/Applications/StatusIm.app",
+        output_path: "status-e2e/StatusIm.app.zip",
         verbose: true,
     )
 end
