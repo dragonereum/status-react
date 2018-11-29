@@ -17,11 +17,9 @@ class DesktopMenu {
     for (let i = 0; i < menuItems.length; ++i) {
       itemMap.set(menuItems[i].text, menuItems[i].onPress);
     }
-    console.warn("###js Before DesktopMenu.show()");
     NativeModules.DesktopMenuManager.show(
         itemNames,
         (name) => {
-          console.warn("###js DesktopMenu callback invoked");
           (itemMap.get(name))();
         }
     );

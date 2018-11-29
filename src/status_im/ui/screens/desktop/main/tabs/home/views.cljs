@@ -59,14 +59,14 @@
         [chat-item/message-timestamp (:timestamp last-message)]]])))
 
 (defn chat-list-item [[chat-id
-                       {:keys [group-chat public? public-key] :as chat}]]
+                       {:keys [group-chat public?] :as chat}]]
   [react/touchable-highlight
    {:on-press (fn [arg]
                 (let [right-click? (= "right" (.-button (.-nativeEvent arg)))]
                   (re-frame/dispatch [:chat.ui/navigate-to-chat chat-id])
                   (when right-click?
                     (popup-menu/show-desktop-menu
-                     (popup-menu/get-chat-menu-items public-key group-chat public? chat-id)))))}
+                     (popup-menu/get-chat-menu-items group-chat public? chat-id)))))}
    [chat-list-item-inner-view (assoc chat :chat-id chat-id)]])
 
 (defn tag-view [tag {:keys [on-press]}]

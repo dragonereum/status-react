@@ -26,14 +26,13 @@
      [react/touchable-highlight
       {:on-press #(let [right-click? (= "right" (.-button (.-nativeEvent %)))
                         action (if right-click? right-click-action left-click-action)]
-                    (log/debug "### wrap-with-menu" right-click?)
                     (action))}
       component]]))
 
-(defn get-chat-menu-items [public-key group-chat public? chat-id]
+(defn get-chat-menu-items [group-chat public? chat-id]
   (->> [(when (and (not group-chat) (not public?))
           {:text (i18n/label :t/view-profile)
-           :on-select #(re-frame/dispatch [:show-profile-desktop public-key])})
+           :on-select #(re-frame/dispatch [:show-profile-desktop chat-id])})
         (when (and group-chat (not public?))
           {:text (i18n/label :t/group-info)
            :on-select #(re-frame/dispatch [:show-group-chat-profile])})

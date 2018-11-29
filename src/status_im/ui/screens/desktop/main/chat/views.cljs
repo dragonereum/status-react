@@ -52,7 +52,7 @@
               (i18n/label :t/public-chat)])]]
      [react/touchable-highlight
       {:on-press #(popup-menu/show-desktop-menu
-                   (popup-menu/get-chat-menu-items public-key group-chat public? chat-id))}
+                   (popup-menu/get-chat-menu-items group-chat public? chat-id))}
       [vector-icons/icon :icons/dots-horizontal
        {:style {:tint-color colors/black
                 :width      24

@@ -30,7 +30,6 @@ void DesktopMenuPrivate::createMenu(const QStringList& items, double callback) {
   QObject::connect(menu, &QMenu::triggered, [=](QAction* action) {
     bridge->invokePromiseCallback(callback, QVariantList{action->text()});
   });
-  qCDebug(DESKTOPMENU) << "### DesktopMenuPrivate before open";
   menu->popup(QCursor::pos());
 }
 
@@ -44,7 +43,6 @@ DesktopMenu::~DesktopMenu() {
 void DesktopMenu::setBridge(Bridge *bridge) {
   Q_D(DesktopMenu);
 
-  qCDebug(DESKTOPMENU) << "### DesktopMenu::setBridge";
   d->bridge = bridge;
 }
 
@@ -58,7 +56,6 @@ QVariantMap DesktopMenu::constantsToExport() { return QVariantMap(); }
 
 void DesktopMenu::show(const QStringList& items, double callback) {
   Q_D(DesktopMenu);
-  qCDebug(DESKTOPMENU) << "### DesktopMenu::show";
   d_ptr->createMenu(items, callback);
 
 }
