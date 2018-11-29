@@ -81,7 +81,7 @@ def build_ios_e2e
         keychain_name: "login.keychain"
     )
 
-    xcarchive_path = build_app(
+    build_ios_app(
         # Creating a build for the iOS Simulator
         # 1. https://medium.com/rocket-fuel/fastlane-to-the-simulator-87549b2601b9
         sdk: "iphonesimulator11.3",
@@ -105,7 +105,7 @@ def build_ios_e2e
     zip(
         path: "status-e2e/Build/Products/Release-iphonesimulator/StatusIm.app",
         output_path: "status-e2e/StatusIm.app.zip",
-        verbose: true,
+        verbose: false,
     )
 end
 
