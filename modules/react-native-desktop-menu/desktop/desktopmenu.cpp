@@ -30,6 +30,7 @@ void DesktopMenuPrivate::createMenu(const QStringList& items, double callback) {
   QObject::connect(menu, &QMenu::triggered, [=](QAction* action) {
     bridge->invokePromiseCallback(callback, QVariantList{action->text()});
   });
+  QObject::connect(menu, &QMenu::triggered, menu, &QMenu::deleteLater);
   menu->popup(QCursor::pos());
 }
 
