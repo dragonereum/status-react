@@ -29,9 +29,13 @@
            (log/debug "notifications-denied")
            (re-frame/dispatch [:notifications.callback/request-notifications-permissions-denied {}]))))))
 
+(defn valid-notification-payload?
+  [{:keys [from to] :as payload}]
+  (and from to))
+
 (defn create-notification-payload
   [{:keys [from to] :as payload}]
-  (if (and from to)
+  (if (valid-notification-payload? payload)
     {:msg (js/JSON.stringify #js {:from from
                                   :to   to})}
     (throw (str "Invalid push notification payload" payload))))
@@ -48,13 +52,16 @@
   (def icon "ic_stat_status_notification")
 
   (defn get-notification-payload [message-js]
-    (let [data (.. message-js -data) ;; https://github.com/invertase/react-native-firebase/blob/adcbeac3d11585dd63922ef178ff6fd886d5aa9b/src/modules/notifications/Notification.js#L79
-          msg  (js/JSON.parse (object/get data "msg"))
-          from (object/get msg "from")
-          to   (object/get msg "to")]
-      (if (and from to)
-        {:from from
-         :to   to}
+    ;; message-js.-data is Notification.data():
+    ;; https://github.com/invertase/react-native-firebase/blob/adcbeac3d11585dd63922ef178ff6fd886d5aa9b/src/modules/notifications/Notification.js#L79
+    (let [data    (.. message-js -data)
+          msg     (js/JSON.parse (object/get data "msg"))
+          from    (object/get msg "from")
+          to      (object/get msg "to")
+          payload {:from from
+                   :to   to}]
+      (if (valid-notification-payload? payload)
+        payload
         (log/warn "failed to retrieve notification payload from" (js/JSON.stringify data)))))
 
   (defn display-notification [{:keys [title body from to]}]
