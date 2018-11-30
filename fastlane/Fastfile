@@ -74,6 +74,11 @@ end
 # builds an ios app with e2e configuration and put it
 # to "status-e2e" output folder
 def build_ios_e2e
+
+    # determine a simulator SDK installed
+    showsdks_output = sh('xcodebuild', '-showsdks')
+    simulator_sdk = showsdks_output.scan(/iphonesimulator\d\d?\.\d\d?/).first
+
     match(
         type: "adhoc",
         force_for_new_devices: true,
@@ -81,10 +86,11 @@ def build_ios_e2e
         keychain_name: "login.keychain"
     )
 
+
     build_ios_app(
         # Creating a build for the iOS Simulator
         # 1. https://medium.com/rocket-fuel/fastlane-to-the-simulator-87549b2601b9
-        sdk: "iphonesimulator11.3",
+        sdk: simulator_sdk,
         destination: "generic/platform=iOS Simulator",
         # 2. fixing compilations issues as stated in https://stackoverflow.com/a/20505258
         #    it looks like i386 isn't supported by React Native
@@ -96,9 +102,10 @@ def build_ios_e2e
         # Normal stuff
         scheme: "StatusIm",
         workspace: "ios/StatusIm.xcworkspace",
-        scheme: "StatusIm",
         configuration: "Release",
+        # Simulator apps can't be archived...
         skip_archive: true,
+        # ...and we don't need an .ipa file for them, because we use .app directly
         skip_package_ipa: true
     )
 
