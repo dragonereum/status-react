@@ -89,6 +89,7 @@ pipeline {
         ipaUrl = ios.getBuildVariables().get('DIAWI_URL')
         /* upload the sha256 checksums file too */
         e2eUrl = cmn.uploadArtifact(cmn.pkgFind('sha256'))
+        println("iOS: ${ipaUrl}")
         /* add URLs to the build description */
         cmn.setBuildDesc(
           Apk: apkUrl, Apke2e: apke2eUrl,

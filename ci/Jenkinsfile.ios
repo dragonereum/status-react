@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'macos-03' }
+  agent { label 'macos' }
 
   options {
     timestamps()

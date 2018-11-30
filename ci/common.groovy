@@ -143,7 +143,7 @@ def githubNotify(Map urls) {
     message += "CI BUILD SUCCESSFUL in ${currentBuild.durationString} (${GIT_COMMIT})\n"
     message += '| | | | | |\n'
     message += '|-|-|-|-|-|\n'
-    message += "| [Android](${urls.apk})([e2e](${urls.e2e})) | [iOS](${urls.ipa}) ([e2e](${urls.iose2e})) "
+    message += "| [Android](${urls.apk}) ([e2e](${urls.e2e})) | [iOS](${urls.ipa}) ([e2e](${urls.iose2e})) |"
     if (dmgUrl != null) {
       message += " [MacOS](${urls.dmg}) | [AppImage](${urls.app}) | [Windows](${urls.win}) |"
     } else {
