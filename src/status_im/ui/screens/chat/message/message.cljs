@@ -15,7 +15,8 @@
             [status-im.utils.platform :as platform]
             [status-im.i18n :as i18n]
             [status-im.ui.components.colors :as colors]
-            [status-im.ui.components.icons.vector-icons :as icons]))
+            [status-im.ui.components.icons.vector-icons :as icons]
+            [status-im.chat.commands.protocol :as protocol]))
 
 (defn install-extension-message [extension-id outgoing]
   [react/touchable-highlight {:on-press #(re-frame/dispatch
@@ -30,11 +31,14 @@
 (defview message-content-command
   [command-message]
   (letsubs [id->command [:chats/id->command]]
-    (if-let [command (commands-receiving/lookup-command-by-ref command-message id->command)]
-      (commands/generate-preview command command-message)
-      (if-let [extension-id (get-in command-message [:content :params :extension-id])]
+    (let [{:keys [type] :as command} (commands-receiving/lookup-command-by-ref command-message id->command)
+          extension-id (get-in command-message [:content :params :extension-id])]
+      (if (and extension-id (or (not type) (and type (satisfies? protocol/Extension type)
+                                                (not= extension-id (protocol/extension-id type)))))
         [install-extension-message extension-id (:outgoing command-message)]
-        [react/text (str "Unhandled command: " (-> command-message :content :command-path first))]))))
+        (if command
+          (commands/generate-preview command command-message)
+          [react/text (str "Unhandled command: " (-> command-message :content :command-path first))])))))
 
 (defview message-timestamp [t justify-timestamp? outgoing command? content]
   (when-not command?
