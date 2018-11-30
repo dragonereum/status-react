@@ -61,9 +61,9 @@ pipeline {
           cmn.copyArts('status-react/combined/desktop-windows', win.number)
         }
         cmn.copyArts('status-react/combined/mobile-ios', ios.number)
+        cmn.copyArts('status-react/combined/mobile-ios', iose2e.number)
         cmn.copyArts('status-react/combined/mobile-android', apk.number)
         cmn.copyArts('status-react/combined/mobile-android', apke2e.number)
-        cmn.copyArts('status-react/combined/mobile-ios', ios.number)
         dir('pkg') {
           /* generate sha256 checksums for upload */
           sh "sha256sum * | tee ${cmn.pkgFilename(btype, 'sha256')}"
@@ -109,7 +109,7 @@ pipeline {
         if (env.CHANGE_ID != null) {
           cmn.githubNotify(
             apk: apkUrl, apke2e: apke2eUrl,
-            ipa: ipaUrl, ipae2e: iose2eUrl,
+            ipa: ipaUrl, iose2e: iose2eUrl,
             app: appUrl, dmg: dmgUrl, win: exeUrl,
           )
         }
